@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Will you be my Valentine?</title>
 
-  <!-- Confetti library -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
   <style>
@@ -30,7 +29,6 @@
       padding: 16px;
     }
 
-    /* FULL-SCREEN CONFETTI CANVAS */
     #confettiCanvas {
       position: fixed;
       inset: 0;
@@ -58,23 +56,24 @@
     }
 
     h1 {
-      font-size: clamp(26px, 4vw, 44px);
+      font-size: clamp(24px, 5vw, 44px);
       margin: 12px 0 18px;
+      line-height: 1.15;
     }
 
+    /* Mobile friendly zone */
     .button-zone {
       position: relative;
-      width: min(520px, 92%);
-      height: 150px;
+      width: 100%;
+      max-width: 520px;
+      height: 260px;
       margin: 0 auto;
-      touch-action: none;
+      touch-action: manipulation;
     }
 
     button {
       position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      padding: 16px 24px;
+      padding: 16px 22px;
       font-size: 18px;
       font-weight: 800;
       border-radius: 999px;
@@ -87,14 +86,18 @@
     }
 
     #yesBtn {
-      left: 18%;
+      left: 10%;
+      top: 50%;
+      transform: translateY(-50%);
       background: var(--yes);
       color: #fff;
     }
     #yesBtn:hover { background: var(--yesHover); }
 
     #noBtn {
-      left: 62%;
+      left: 58%;
+      top: 50%;
+      transform: translateY(-50%);
       background: #e5e7eb;
       color: #111827;
     }
@@ -112,7 +115,7 @@
     }
 
     .result h2 {
-      font-size: clamp(30px, 4.5vw, 46px);
+      font-size: clamp(28px, 6vw, 46px);
       margin: 10px 0;
     }
 
@@ -126,6 +129,14 @@
       from { transform: scale(.96); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
+
+    @media (max-width: 420px) {
+      .card { padding: 18px 14px; border-radius: 18px; }
+      .button-zone { height: 320px; }
+      button { font-size: 16px; padding: 14px 18px; }
+      #yesBtn { left: 8%; }
+      #noBtn { left: 54%; }
+    }
   </style>
 </head>
 
@@ -133,7 +144,6 @@
   <canvas id="confettiCanvas"></canvas>
 
   <main class="card">
-    <!-- ANIMAL WITH HEART -->
     <svg class="art" viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="fur" x1="0" x2="1">
@@ -178,7 +188,6 @@
       <button id="noBtn">No</button>
     </section>
 
-    <!-- HINT -->
     <div class="hint" id="hint">“No” seems a bit shy 😈</div>
 
     <section class="result" id="result">
@@ -198,7 +207,31 @@
     const result = document.getElementById("result");
     const hint = document.getElementById("hint");
 
-    /* ---------- CONFETTI ---------- */
+    // ===== Google Sheet tracking =====
+    const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzY5Vwv3V70SHrxp3H5sPyVQZmIXw1dMROjcfEx3LhBUvexKfCIB4wBeLX55rJazEVJ/exec";
+    const SECRET = "basi_2026_02_10_9f3k"; // MUST match Apps Script
+
+    function track(answer) {
+      const data = new URLSearchParams();
+      data.append("answer", answer);
+      data.append("page", location.href);
+      data.append("ua", navigator.userAgent);
+      data.append("secret", SECRET);
+
+      try {
+        const ok = navigator.sendBeacon(SHEET_WEBAPP_URL, data.toString());
+        if (ok) return;
+      } catch (e) {}
+
+      fetch(SHEET_WEBAPP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: data.toString(),
+        keepalive: true
+      }).catch(() => {});
+    }
+
+    // ===== Confetti =====
     const confettiCanvas = document.getElementById("confettiCanvas");
 
     function resizeConfettiCanvas() {
@@ -213,10 +246,7 @@
     window.addEventListener("resize", resizeConfettiCanvas);
     window.addEventListener("orientationchange", () => setTimeout(resizeConfettiCanvas, 150));
 
-    const confettiInstance = confetti.create(confettiCanvas, {
-      resize: false,
-      useWorker: true
-    });
+    const confettiInstance = confetti.create(confettiCanvas, { resize: false, useWorker: true });
 
     function fullScreenConfetti() {
       const end = Date.now() + 1600;
@@ -243,14 +273,14 @@
       }, 300);
     }
 
-    /* ---------- YES BUTTON GROWS ---------- */
+    // ===== Yes grows =====
     let yesScale = 1;
     function growYes() {
       yesScale = Math.min(2.2, yesScale + 0.1);
       yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
     }
 
-    /* ---------- NO BUTTON RUNS AWAY ---------- */
+    // ===== No runs =====
     function clamp(n, min, max) {
       return Math.max(min, Math.min(max, n));
     }
@@ -265,8 +295,8 @@
       dx /= mag;
       dy /= mag;
 
-      let newLeft = (b.left - z.left) + dx * 150;
-      let newTop  = (b.top - z.top) + dy * 150;
+      let newLeft = (b.left - z.left) + dx * 160;
+      let newTop  = (b.top - z.top) + dy * 160;
 
       newLeft = clamp(newLeft, 0, z.width - b.width);
       newTop  = clamp(newTop, 0, z.height - b.height);
@@ -278,21 +308,40 @@
       growYes();
     }
 
-    zone.addEventListener("pointermove", e => {
+    // Track no attempts (throttled)
+    let lastNoAttempt = 0;
+
+    function handleAvoid(e) {
       const b = noBtn.getBoundingClientRect();
+      const x = e.clientX;
+      const y = e.clientY;
+
       const d = Math.hypot(
-        (b.left + b.width / 2) - e.clientX,
-        (b.top + b.height / 2) - e.clientY
+        (b.left + b.width / 2) - x,
+        (b.top + b.height / 2) - y
       );
-      if (d < 140) moveNo(e.clientX, e.clientY);
-    });
 
-    noBtn.addEventListener("click", e => e.preventDefault());
+      if (d < 180) {
+        const now = Date.now();
+        if (now - lastNoAttempt > 1200) {
+          lastNoAttempt = now;
+          track("no_attempt");
+        }
+        moveNo(x, y);
+      }
+    }
 
-    /* ---------- YES CLICK ---------- */
+    zone.addEventListener("pointermove", handleAvoid);
+    zone.addEventListener("pointerdown", handleAvoid);
+
+    // Keep No unclickable (prank)
+    noBtn.addEventListener("click", (e) => e.preventDefault());
+
+    // Yes click
     yesBtn.addEventListener("click", () => {
+      track("yes");
       zone.style.display = "none";
-      hint.style.display = "none";     // HIDE THE HINT
+      hint.style.display = "none";
       result.style.display = "block";
       resizeConfettiCanvas();
       fullScreenConfetti();
@@ -300,6 +349,3 @@
   </script>
 </body>
 </html>
-
-
-
