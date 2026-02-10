@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Will you be my Valentine?</title>
 
+  <!-- Confetti library -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
   <style>
@@ -29,6 +31,7 @@
       padding: 16px;
     }
 
+    /* FULL-SCREEN CONFETTI CANVAS */
     #confettiCanvas {
       position: fixed;
       inset: 0;
@@ -61,7 +64,7 @@
       line-height: 1.15;
     }
 
-    /* Mobile friendly zone */
+    /* Mobile friendly button zone */
     .button-zone {
       position: relative;
       width: 100%;
@@ -130,12 +133,13 @@
       to { transform: scale(1); opacity: 1; }
     }
 
+    /* Extra small phones */
     @media (max-width: 420px) {
       .card { padding: 18px 14px; border-radius: 18px; }
       .button-zone { height: 320px; }
       button { font-size: 16px; padding: 14px 18px; }
       #yesBtn { left: 8%; }
-      #noBtn { left: 54%; }
+      #noBtn  { left: 54%; }
     }
   </style>
 </head>
@@ -144,6 +148,7 @@
   <canvas id="confettiCanvas"></canvas>
 
   <main class="card">
+    <!-- ANIMAL WITH HEART -->
     <svg class="art" viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="fur" x1="0" x2="1">
@@ -188,6 +193,7 @@
       <button id="noBtn">No</button>
     </section>
 
+    <!-- HINT -->
     <div class="hint" id="hint">“No” seems a bit shy 😈</div>
 
     <section class="result" id="result">
@@ -212,10 +218,6 @@
     const SECRET = "basi_2026_02_10_9f3k"; // MUST match Apps Script
 
     function track(answer) {
-  // your code...
-}
-window.track = track;
-
       const data = new URLSearchParams();
       data.append("answer", answer);
       data.append("page", location.href);
@@ -235,7 +237,10 @@ window.track = track;
       }).catch(() => {});
     }
 
-    // ===== Confetti =====
+    // Make it testable in console
+    window.track = track;
+
+    /* ---------- CONFETTI ---------- */
     const confettiCanvas = document.getElementById("confettiCanvas");
 
     function resizeConfettiCanvas() {
@@ -250,7 +255,10 @@ window.track = track;
     window.addEventListener("resize", resizeConfettiCanvas);
     window.addEventListener("orientationchange", () => setTimeout(resizeConfettiCanvas, 150));
 
-    const confettiInstance = confetti.create(confettiCanvas, { resize: false, useWorker: true });
+    const confettiInstance = confetti.create(confettiCanvas, {
+      resize: false,
+      useWorker: true
+    });
 
     function fullScreenConfetti() {
       const end = Date.now() + 1600;
@@ -277,14 +285,14 @@ window.track = track;
       }, 300);
     }
 
-    // ===== Yes grows =====
+    /* ---------- YES BUTTON GROWS ---------- */
     let yesScale = 1;
     function growYes() {
       yesScale = Math.min(2.2, yesScale + 0.1);
       yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
     }
 
-    // ===== No runs =====
+    /* ---------- NO BUTTON RUNS AWAY ---------- */
     function clamp(n, min, max) {
       return Math.max(min, Math.min(max, n));
     }
@@ -339,9 +347,9 @@ window.track = track;
     zone.addEventListener("pointerdown", handleAvoid);
 
     // Keep No unclickable (prank)
-    noBtn.addEventListener("click", (e) => e.preventDefault());
+    noBtn.addEventListener("click", e => e.preventDefault());
 
-    // Yes click
+    /* ---------- YES CLICK ---------- */
     yesBtn.addEventListener("click", () => {
       track("yes");
       zone.style.display = "none";
@@ -353,4 +361,6 @@ window.track = track;
   </script>
 </body>
 </html>
+```
+
 
