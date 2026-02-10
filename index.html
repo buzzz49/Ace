@@ -212,6 +212,10 @@
     const SECRET = "basi_2026_02_10_9f3k"; // MUST match Apps Script
 
     function track(answer) {
+  // your code...
+}
+window.track = track;
+
       const data = new URLSearchParams();
       data.append("answer", answer);
       data.append("page", location.href);
@@ -349,3 +353,4 @@
   </script>
 </body>
 </html>
+
